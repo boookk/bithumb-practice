@@ -45,10 +45,7 @@ class BithumbPracticeApplicationTests {
 
         StepVerifier.create(numbers)
                 .expectNextCount(50)
-                .thenConsumeWhile(i -> {
-                    Assertions.assertEquals(0, i % 2);
-                    return true;
-                })
+                .thenConsumeWhile(i -> i % 2 == 0)
                 .verifyComplete();
     }
 
@@ -58,11 +55,11 @@ class BithumbPracticeApplicationTests {
      */
     @Test
     public void publishFlow() {
-        Flux<String> c = Flux.just("hello", "there")
-                .publishOn(Schedulers.single())
-                .log();
+        Mono<String> a = Mono.just("hello").log();
+        Mono<String> b = Mono.just("there").log();
+        Flux<String> ab = Flux.concat(a, b).log();
 
-        StepVerifier.create(c)
+        StepVerifier.create(ab)
                 .expectNext("hello", "there")
                 .verifyComplete();
     }
@@ -79,13 +76,19 @@ class BithumbPracticeApplicationTests {
         Person p2 = new Person("Jack", "[jack@gmail.com](mailto:jack@gmail.com)", "12345678");
 
         Flux<Person> person = Flux.just(p1, p2)
-                .doOnNext(p -> System.out.println(p.getName().toUpperCase()))
+                .map(p -> {
+                    p.setName(p.getName().toUpperCase());
+                    return p;
+                })
+                .doOnNext(p -> System.out.println(p.getName()))
                 .log();
 
         StepVerifier.create(person)
                 .assertNext(p -> p.getName().equals("JOHN"))
                 .assertNext(p -> p.getName().equals("JACK"))
                 .verifyComplete();
+
+        System.out.println(p1.getName());
     }
 
 
